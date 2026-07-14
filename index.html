@@ -46,12 +46,9 @@
 
 <div id="sky">🌤️</div>
 <div id="aqiLabel"></div>
-<div id="co2Label"></div>
-<div id="savingLabel"></div>
 
 <div id="plant">🌱</div>
 <div id="plantLabel"></div>
-<div id="growthLabel"></div>
 
 <script>
 // This is the whole "brain" of the simulator. One function, top to bottom.
@@ -108,14 +105,6 @@ function update(changedSlider) {
   document.getElementById("sky").textContent = sky;
   document.getElementById("aqiLabel").textContent = "Air Quality: " + aqiWord;
 
-  // 4b. Turn pollution into a CO2 number (ppm = parts per million)
-  var co2 = Math.round(415 + pollution * 0.5);
-  document.getElementById("co2Label").textContent = "CO₂: " + co2 + " ppm";
-
-  // 4c. Emissions saving = the opposite of pollution
-  var saving = Math.round(100 - pollution);
-  document.getElementById("savingLabel").textContent = "Your Emissions Saving: " + saving + "%";
-
   // 5. Pick a plant picture and a word for how it feels
   var plant = "🌳";
   var plantWord = "Thriving!";
@@ -128,11 +117,6 @@ function update(changedSlider) {
   }
   document.getElementById("plant").textContent = plant;
   document.getElementById("plantLabel").textContent = "Plant: " + plantWord;
-
-  // 6. Growth rate: more pollution = slower growth, never below 10%
-  var growth = Math.round(100 - pollution * 0.8);
-  if (growth < 10) { growth = 10; }
-  document.getElementById("growthLabel").textContent = "Plant Growth Rate: " + growth + "%";
 }
 
 // Run it once when the page loads
