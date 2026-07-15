@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>STS Green Seed</title>
+<title>Green Energy Change</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -19,7 +19,7 @@
 </head>
 <body>
 
-<h1>🌍 STS Green Seed </h1>
+<h1>🌍 Green Energy Change</h1>
 <p>Move the sliders. Watch what happens to the sky and the plant.</p>
 
 <div class="slider-box">
@@ -83,22 +83,31 @@ function update(changedSlider) {
   document.getElementById("greenVal").textContent = green;
   document.getElementById("evVal").textContent = ev;
 
-  // 3. Each power source makes a different amount of CO2 per unit of power.
-  //    Coal is dirty (820), green energy is clean (30), nuclear is very clean (12).
-  var gridDirtiness = (coal * 820 + green * 30 + nuclear * 12) / 100;
-
-  // 3b. Cars that aren't electric burn petrol directly (fully dirty).
-  //     Electric cars are only as clean as the power grid that charges them.
+  // 3. Cars that aren't electric burn petrol directly.
   var petrol = 100 - ev;
-  var pollution = Math.round(petrol + (ev * gridDirtiness) / 820);
+
+  // 3b. Work out how much of the energy mix is coal, since both Scratch
+  //     formulas need this "coal's share of total energy" number.
+  var energyMix = coal + nuclear + green;
+  var coalShare = energyMix > 0 ? coal / energyMix : 0;
+
+  // 3c. Air Quality — the exact formula from the Scratch project.
+  //     Petrol cars pollute fully. Electric cars only pollute as much as
+  //     coal's share of the power grid. Higher number = worse air.
+  var airQuality = (petrol * 100 + ev * (coalShare * 90)) / 100;
+
+  // 3d. Plant Health — the exact formula from the Scratch project.
+  //     Petrol and coal-charged EVs hurt the plant; green and nuclear help it.
+  //     Higher number = healthier plant.
+  var plantHealth = 100 - ((petrol * 1.5 + ev * coalShare * 1.2 + green * 0.4 + nuclear * 0.2) / (energyMix + 100)) * 100;
 
   // 4. Pick a sky picture and a word for the air
   var sky = "☀️";
   var aqiWord = "Good";
-  if (pollution > 60) {
+  if (airQuality > 60) {
     sky = "🌫️";
     aqiWord = "Bad";
-  } else if (pollution > 30) {
+  } else if (airQuality > 30) {
     sky = "🌤️";
     aqiWord = "Okay";
   }
@@ -108,10 +117,10 @@ function update(changedSlider) {
   // 5. Pick a plant picture and a word for how it feels
   var plant = "🌳";
   var plantWord = "Thriving!";
-  if (pollution > 60) {
+  if (plantHealth < 45) {
     plant = "🥀";
     plantWord = "Struggling.";
-  } else if (pollution > 30) {
+  } else if (plantHealth < 65) {
     plant = "🌱";
     plantWord = "A bit stressed.";
   }
