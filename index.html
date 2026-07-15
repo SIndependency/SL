@@ -86,20 +86,21 @@ function update(changedSlider) {
   // 3. Cars that aren't electric burn petrol directly.
   var petrol = 100 - ev;
 
-  // 3b. Work out how much of the energy mix is coal, since both Scratch
-  //     formulas need this "coal's share of total energy" number.
-  var energyMix = coal + nuclear + green;
-  var coalShare = energyMix > 0 ? coal / energyMix : 0;
+  // 3b. Grid Carbon Intensity: how dirty is the electricity?
+  //     Coal = 820 g CO₂/kWh, Green = 30, Nuclear = 12 (IPCC AR5)
+  var gridCI = (coal * 820 + green * 30 + nuclear * 12) / 100;
 
-  // 3c. Air Quality — the exact formula from the Scratch project.
-  //     Petrol cars pollute fully. Electric cars only pollute as much as
-  //     coal's share of the power grid. Higher number = worse air.
-  var airQuality = (petrol * 100 + ev * (coalShare * 90)) / 100;
+  // 3c. Air Quality (0 = clean, 100 = worst).
+  //     190.8 g CO₂/km = Australian fleet average (NTC 2025).
+  //     0.175 kWh/km = EV energy use per km.
+  //     Petrol cars pollute at 190.8 g/km. EVs pollute at 0.175 × gridCI g/km.
+  var airQuality = (petrol * 190.8 + ev * 0.175 * gridCI) / 190.8;
 
-  // 3d. Plant Health — the exact formula from the Scratch project.
-  //     Petrol and coal-charged EVs hurt the plant; green and nuclear help it.
-  //     Higher number = healthier plant.
-  var plantHealth = 100 - ((petrol * 1.5 + ev * coalShare * 1.2 + green * 0.4 + nuclear * 0.2) / (energyMix + 100)) * 100;
+  // 3d. Plant Health (100 = thriving, 0 = dead).
+  //     Same formula but power-plant pollution is multiplied by 0.25
+  //     because sources #10 and #11 show plant damage is a roadside effect —
+  //     tailpipe soot hits plants directly, power-plant emissions are far away.
+  var plantHealth = 100 - (petrol * 190.8 + ev * 0.175 * gridCI * 0.25) / 190.8;
 
   // 4. Pick a sky picture and a word for the air
   var sky = "☀️";
@@ -117,10 +118,10 @@ function update(changedSlider) {
   // 5. Pick a plant picture and a word for how it feels
   var plant = "🌳";
   var plantWord = "Thriving!";
-  if (plantHealth < 45) {
+  if (plantHealth < 30) {
     plant = "🥀";
     plantWord = "Struggling.";
-  } else if (plantHealth < 65) {
+  } else if (plantHealth < 60) {
     plant = "🌱";
     plantWord = "A bit stressed.";
   }
