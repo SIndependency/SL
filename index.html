@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Green Drive Simulator</title>
+<title>Green Energy Change</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -15,11 +15,21 @@
   input[type=range] { width: 100%; }
   #sky, #plant { font-size: 60px; margin: 10px; }
   #aqiLabel, #plantLabel { font-size: 22px; font-weight: bold; }
+  #alertBox {
+    margin: 10px auto;
+    max-width: 400px;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  .alert-ok  { background: #d4edda; color: #155724; }
+  .alert-bad { background: #f8d7da; color: #721c24; }
 </style>
 </head>
 <body>
 
-<h1>🌍 Green Drive Simulator</h1>
+<h1>🌍 Green Energy Change</h1>
 <p>Move the sliders. Watch what happens to the sky and the plant.</p>
 
 <div class="slider-box">
@@ -38,6 +48,7 @@
 </div>
 
 <p id="totalLabel">Total energy mix: 100%</p>
+<div id="alertBox" class="alert-ok">✅ Energy mix adds to 100% — ready!</div>
 
 <div class="slider-box">
   <label>🔋 Electric Cars Percentage: <span id="evVal">50</span>%</label><br>
@@ -51,9 +62,6 @@
 <div id="plantLabel"></div>
 
 <script>
-// This is the whole "brain" of the simulator. One function, top to bottom.
-// "changedSlider" tells us which slider the student just moved (or nothing,
-// if this is the very first run when the page loads).
 function update(changedSlider) {
 
   // 1. Read the four sliders
@@ -63,19 +71,26 @@ function update(changedSlider) {
   var ev = Number(document.getElementById("evSlider").value);
 
   // 1b. The three energy sliders can't add up to more than 100%.
-  //     If they do, push the slider the student just moved back down.
   var energyTotal = coal + nuclear + green;
   if (energyTotal > 100 && changedSlider) {
     var overflow = energyTotal - 100;
     changedSlider.value = Number(changedSlider.value) - overflow;
-
-    // Re-read all three, since we just changed one of them
     coal = Number(document.getElementById("coalSlider").value);
     nuclear = Number(document.getElementById("nuclearSlider").value);
     green = Number(document.getElementById("greenSlider").value);
     energyTotal = coal + nuclear + green;
   }
   document.getElementById("totalLabel").textContent = "Total energy mix: " + energyTotal + "%";
+
+  // 1c. Show alert if energy mix is not exactly 100%
+  var alertBox = document.getElementById("alertBox");
+  if (energyTotal === 100) {
+    alertBox.textContent = "✅ Energy mix adds to 100% — ready!";
+    alertBox.className = "alert-ok";
+  } else {
+    alertBox.textContent = "⚠️ Energy mix must add to 100%! Currently at " + energyTotal + "%.";
+    alertBox.className = "alert-bad";
+  }
 
   // 2. Show the numbers next to the sliders
   document.getElementById("coalVal").textContent = coal;
@@ -87,25 +102,27 @@ function update(changedSlider) {
   var petrol = 100 - ev;
 
   // 3b. Grid Carbon Intensity: how dirty is the electricity?
-  //     Coal = 820 g CO₂/kWh, Green = 30, Nuclear = 12 (IPCC AR5)
   var gridCI = (coal * 820 + green * 30 + nuclear * 12) / 100;
 
   // 3c. Air Quality (0 = clean, 100 = worst).
-  //     190.8 g CO₂/km = Australian fleet average (NTC 2025).
-  //     0.175 kWh/km = EV energy use per km.
-  //     Petrol cars pollute at 190.8 g/km. EVs pollute at 0.175 × gridCI g/km.
   var airQuality = (petrol * 190.8 + ev * 0.175 * gridCI) / 190.8;
 
   // 3d. Plant Health (100 = thriving, 0 = dead).
-  //     Same formula but power-plant pollution is multiplied by 0.25
-  //     because sources #10 and #11 show plant damage is a roadside effect —
-  //     tailpipe soot hits plants directly, power-plant emissions are far away.
   var plantHealth = 100 - (petrol * 190.8 + ev * 0.175 * gridCI * 0.25) / 190.8;
+
+  // 3e. If energy mix is not 100%, zero out results (same as Scratch version)
+  if (energyTotal !== 100) {
+    airQuality = 0;
+    plantHealth = 0;
+  }
 
   // 4. Pick a sky picture and a word for the air
   var sky = "☀️";
   var aqiWord = "Good";
-  if (airQuality > 60) {
+  if (energyTotal !== 100) {
+    sky = "❓";
+    aqiWord = "Fix your energy mix first!";
+  } else if (airQuality > 60) {
     sky = "🌫️";
     aqiWord = "Bad";
   } else if (airQuality > 30) {
@@ -118,7 +135,10 @@ function update(changedSlider) {
   // 5. Pick a plant picture and a word for how it feels
   var plant = "🌳";
   var plantWord = "Thriving!";
-  if (plantHealth < 30) {
+  if (energyTotal !== 100) {
+    plant = "❓";
+    plantWord = "Fix your energy mix first!";
+  } else if (plantHealth < 30) {
     plant = "🥀";
     plantWord = "Struggling.";
   } else if (plantHealth < 60) {
